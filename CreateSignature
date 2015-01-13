@@ -1,0 +1,83 @@
+<?php
+/**
+ * @author yairbudic
+ */
+
+class CreateSignature {
+
+    /**
+     * @constant string
+     */
+    const ALGO = 'sha256';
+
+    /**
+     * @var string
+     */
+    private $userAgent;
+
+    /**
+     * @var string
+     */
+    private $urlPath;
+
+    /**
+     * @var string
+     */
+    private $requestBody;
+
+    /**
+     * @var string
+     */
+    private $requestParams;   // parameter=value&also=another
+
+    /**
+     * @var string
+     */
+    private $behalfSecretKey;
+
+    /**
+     * @var string
+     */
+    private $data;
+
+
+    /**
+     * @params string $userAgent
+     * @params string $urlPath
+     * @params string $requestBody
+     * @params string $requestParams
+     * @params string $behalfSecretKey
+     */
+    public function __construct($userAgent, $urlPath, $requestBody, $requestParams, $behalfSecretKey) {
+        $this->userAgent = $userAgent;
+        $this->urlPath = $urlPath;
+        $this->requestParams = $requestParams;
+        $this->requestBody = $requestBody;
+        if (is_string($behalfSecretKey)) {
+            $this->behalfSecretKey = $behalfSecretKey; //need to check for not empty string
+        } else {
+            throw new \Exception('Invalid or missing secret');
+        }
+    }
+
+    private function concatData() {
+        $varsToCheck=array('userAgent', 'urlPath', 'requestBody', 'requestParams');
+        foreach($varsToCheck as $key) {
+            if(! is_string($this->$key) && $this->$key != NULL) {
+                throw new \Exception($key . ' is not a valid Input');
+            }
+        }
+        $this->data=$this->userAgent . $this->urlPath . $this->requestBody . $this->requestParams;
+    }
+
+
+    /**
+     * Function to generate hash of the data using the pre-defined algo
+     * @return string
+     */
+    public function generateHash() {
+        $this->concatData();
+        $signature=hash_hmac(self::ALGO, $this->data, $this->behalfSecretKey);
+        return $signature;
+    }
+}
